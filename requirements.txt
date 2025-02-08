@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+langgraph
+langchain-core>=0.1.27
+langchain>=0.1.9
+langsmith>=0.1.22
+langchain-google-genai
+python-dotenv
+pycoingecko==3.1.0
+redis==5.0.1
+pydantic>=2.6.1
+typing-extensions>=4.9.0
+slowapi
+streamlit==1.32.0
+requests
+plotly==5.19.0
+pandas==2.2.1
