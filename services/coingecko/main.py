@@ -5,6 +5,7 @@ import redis
 import json
 import os
 import logging
+import socket
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from dotenv import load_dotenv
@@ -12,16 +13,19 @@ from dotenv import load_dotenv
 # Create logs directory if it doesn't exist
 Path("logs").mkdir(exist_ok=True)
 
+# Get container hostname for identification
+HOSTNAME = socket.gethostname()
+
 # Configure logging
 logger = logging.getLogger("coingecko_service")
 logger.setLevel(logging.INFO)
 
-# Create formatters
+# Create formatters with hostname
 file_formatter = logging.Formatter(
-    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    f'%(asctime)s - [Container: {HOSTNAME}] - %(name)s - %(levelname)s - %(message)s'
 )
 console_formatter = logging.Formatter(
-    '%(asctime)s - %(levelname)s - %(message)s'
+    f'%(asctime)s - [Container: {HOSTNAME}] - %(levelname)s - %(message)s'
 )
 
 # File handler (rotating file handler)
@@ -78,23 +82,29 @@ except:
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    """Health check endpoint with container identification."""
+    return {
+        "status": "healthy",
+        "container": HOSTNAME
+    }
 
 @app.get("/price/{coin_id}")
 async def get_crypto_price(coin_id: str):
     """Get current price for a cryptocurrency."""
     try:
+        logger.info(f"[Container: {HOSTNAME}] Processing price request for coin_id: {coin_id}")
+        
         if redis_client:
             cache_key = f"price:{coin_id}"
             cached_data = redis_client.get(cache_key)
             
             if cached_data:
-                logger.info(f"✅ Cache HIT for price data - coin_id: {coin_id}")
+                logger.info(f"[Container: {HOSTNAME}] ✅ Cache HIT for price data - coin_id: {coin_id}")
                 return json.loads(cached_data)
             
-            logger.info(f"❌ Cache MISS for price data - coin_id: {coin_id}")
+            logger.info(f"[Container: {HOSTNAME}] ❌ Cache MISS for price data - coin_id: {coin_id}")
         
-        logger.info(f"Fetching price data from CoinGecko API - coin_id: {coin_id}")
+        logger.info(f"[Container: {HOSTNAME}] Fetching price data from CoinGecko API - coin_id: {coin_id}")
         data = coingecko.get_price(
             ids=coin_id,
             vs_currencies='usd',
@@ -103,16 +113,16 @@ async def get_crypto_price(coin_id: str):
         )
         
         if not data:
-            logger.error(f"No data found for coin_id: {coin_id}")
+            logger.error(f"[Container: {HOSTNAME}] No data found for coin_id: {coin_id}")
             raise HTTPException(status_code=404, detail=f"No data found for coin: {coin_id}")
             
         if redis_client:
             redis_client.setex(cache_key, 60, json.dumps(data))
-            logger.info(f"Cached price data for coin_id: {coin_id}")
+            logger.info(f"[Container: {HOSTNAME}] Cached price data for coin_id: {coin_id}")
             
         return data
     except Exception as e:
-        logger.error(f"Error fetching price for {coin_id}: {str(e)}")
+        logger.error(f"[Container: {HOSTNAME}] Error fetching price for {coin_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/historical/{coin_id}")
