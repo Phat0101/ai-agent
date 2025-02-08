@@ -7,6 +7,159 @@ An intelligent agent built with LangGraph and FastAPI that provides cryptocurren
 
 The application is structured as a microservices-based system with the following components:
 
+### System Architecture
+
+```mermaid
+graph TD
+    User[User] --> Frontend[Frontend Service]
+    Frontend --> Backend[Main Backend Service]
+    
+    subgraph LangGraph Workflow
+        QueryAnalysis[Query Analysis Node]
+        FetchData[Data Fetch Node]
+        Reflection[Reflection Node]
+        FormatResponse[Response Format Node]
+        
+        QueryAnalysis --> FetchData
+        FetchData --> Reflection
+        Reflection --> FetchData
+        FetchData --> FormatResponse
+    end
+    
+    Backend --> QueryAnalysis
+    FormatResponse --> Frontend
+    
+    subgraph CoinGecko Services
+        CoinGecko1[CoinGecko Service 1]
+        CoinGecko2[CoinGecko Service 2]
+        CoinGecko3[CoinGecko Service 3]
+    end
+    
+    FetchData --> CoinGecko1
+    FetchData --> CoinGecko2
+    FetchData --> CoinGecko3
+    
+    CoinGecko1 --> Redis[(Redis Cache)]
+    CoinGecko2 --> Redis
+    CoinGecko3 --> Redis
+    
+    CoinGecko1 --> CoinGeckoAPI[CoinGecko API]
+    CoinGecko2 --> CoinGeckoAPI
+    CoinGecko3 --> CoinGeckoAPI
+    
+    QueryAnalysis --> GeminiAI[Google Gemini AI]
+    FormatResponse --> GeminiAI
+```
+
+### Query Processing Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant LangGraph as LangGraph Workflow
+    participant GeminiAI
+    participant CoinGecko
+    participant Redis
+    
+    User->>Frontend: Submit query
+    Frontend->>LangGraph: Start workflow
+    
+    rect rgb(240, 248, 255)
+        note right of LangGraph: Query Analysis Node
+        LangGraph->>GeminiAI: Analyze query
+        GeminiAI-->>LangGraph: Extract coin_id, query_type
+    end
+    
+    rect rgb(240, 255, 240)
+        note right of LangGraph: Data Fetch Node
+        LangGraph->>CoinGecko: Request price data
+        CoinGecko->>Redis: Check cache
+        
+        alt Cache Hit
+            Redis-->>CoinGecko: Return cached data
+        else Cache Miss
+            CoinGecko->>CoinGeckoAPI: Fetch fresh data
+            CoinGeckoAPI-->>CoinGecko: Return data
+            CoinGecko->>Redis: Cache data
+        end
+        
+        CoinGecko-->>LangGraph: Return price data
+    end
+    
+    rect rgb(255, 240, 240)
+        note right of LangGraph: Reflection Node
+        alt Data Not Found
+            LangGraph->>GeminiAI: Refine coin_id
+            GeminiAI-->>LangGraph: Suggest alternative
+            LangGraph->>CoinGecko: Retry with new coin_id
+        end
+    end
+    
+    rect rgb(255, 240, 255)
+        note right of LangGraph: Format Response Node
+        LangGraph->>GeminiAI: Format response
+        GeminiAI-->>LangGraph: Natural language response
+    end
+    
+    LangGraph-->>Frontend: Final response
+    Frontend-->>User: Display result
+```
+
+### State Management Flow
+
+```mermaid
+flowchart TD
+    Start([Start]) --> InitState[Initialize State]
+    
+    subgraph LangGraph Workflow
+        InitState --> QueryNode[Query Analysis Node]
+        QueryNode --> |Update State| FetchNode[Data Fetch Node]
+        FetchNode --> |Check Data| Decision{Data Found?}
+        Decision --> |Yes| FormatNode[Format Response Node]
+        Decision --> |No| ReflectNode[Reflection Node]
+        ReflectNode --> |Update coin_id| FetchNode
+        FormatNode --> |Final State| End([End])
+    end
+    
+    subgraph State Management
+        State1[(Initial State)]
+        State2[(Query State)]
+        State3[(Data State)]
+        State4[(Final State)]
+    end
+    
+    QueryNode -.-> State2
+    FetchNode -.-> State3
+    FormatNode -.-> State4
+    
+    style State1 fill:#f9f,stroke:#333
+    style State2 fill:#bbf,stroke:#333
+    style State3 fill:#bfb,stroke:#333
+    style State4 fill:#fbb,stroke:#333
+```
+
+### Caching Mechanism
+
+```mermaid
+flowchart TD
+    A[Client Request] --> B{Cache Check}
+    B -->|Cache Hit| C[Return Cached Data]
+    B -->|Cache Miss| D[Fetch from CoinGecko API]
+    D --> E[Store in Redis]
+    E --> F[Return Fresh Data]
+    
+    subgraph Redis Cache
+    G[(Price Data)]
+    H[(Historical Data)]
+    end
+    
+    C -.-> G
+    C -.-> H
+    E -.-> G
+    E -.-> H
+```
+
 ### Core Services
 
 1. **Main Backend Service** (`/app`)
@@ -161,93 +314,3 @@ Content-Type: application/json
     "query": "What is the current price of Bitcoin?"
 }
 ```
-
-#### Health Check
-```bash
-GET /health
-```
-
-### CoinGecko Service Endpoints
-
-#### Current Price
-```bash
-GET /price/{coin_id}
-```
-
-#### Historical Data
-```bash
-GET /historical/{coin_id}?days={number_of_days}
-```
-
-## 🔍 Example Queries
-
-- "What is Bitcoin's current price?"
-- "Show me Ethereum's price history for the last 7 days"
-- "What's the current market cap of Dogecoin?"
-- "How has BNB performed over the last week?"
-
-## 🛠 Development
-
-### Local Development Setup
-
-1. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Start Redis (if using locally):
-```bash
-docker run -d -p 6379:6379 redis:alpine
-```
-
-4. Run services:
-```bash
-# Terminal 1 - Main Backend
-uvicorn main:app --reload --port 8000
-
-# Terminal 2 - CoinGecko Service
-cd services/coingecko
-uvicorn main:app --reload --port 8001
-
-# Terminal 3 - Frontend
-streamlit run streamlit_app.py
-```
-
-## 📈 Monitoring
-
-- Service health checks available at `/health` endpoints
-- Docker container status: `docker-compose ps`
-- Logs available in `logs/crypto_agent.log`
-- Redis monitoring: `redis-cli monitor`
-
-## Logging
-
-# Logging system configuration
-Logs are stored in `logs/crypto_agent.log` with:
-- Rotating file handler (10MB max size)
-- Console output
-- Detailed cache operations logging
-- API call tracking
-- Error tracing
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 👤 Author
-
-Patrick Nguyen
-
-## 🙏 Acknowledgments
-
-- [LangGraph](https://github.com/langchain-ai/langgraph) for workflow framework
-- [CoinGecko](https://www.coingecko.com/en/api) for cryptocurrency data
-- [FastAPI](https://fastapi.tiangolo.com/) for API framework
-- [Streamlit](https://streamlit.io/) for frontend interface
-- [Google Gemini](https://ai.google.dev/) for AI capabilities
