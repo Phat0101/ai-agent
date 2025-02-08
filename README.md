@@ -314,3 +314,93 @@ Content-Type: application/json
     "query": "What is the current price of Bitcoin?"
 }
 ```
+
+#### Health Check
+```bash
+GET /health
+```
+
+### CoinGecko Service Endpoints
+
+#### Current Price
+```bash
+GET /price/{coin_id}
+```
+
+#### Historical Data
+```bash
+GET /historical/{coin_id}?days={number_of_days}
+```
+
+## 🔍 Example Queries
+
+- "What is Bitcoin's current price?"
+- "Show me Ethereum's price history for the last 7 days"
+- "What's the current market cap of Dogecoin?"
+- "How has BNB performed over the last week?"
+
+## 🛠 Development
+
+### Local Development Setup
+
+1. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Start Redis (if using locally):
+```bash
+docker run -d -p 6379:6379 redis:alpine
+```
+
+4. Run services:
+```bash
+# Terminal 1 - Main Backend
+uvicorn main:app --reload --port 8000
+
+# Terminal 2 - CoinGecko Service
+cd services/coingecko
+uvicorn main:app --reload --port 8001
+
+# Terminal 3 - Frontend
+streamlit run streamlit_app.py
+```
+
+## 📈 Monitoring
+
+- Service health checks available at `/health` endpoints
+- Docker container status: `docker-compose ps`
+- Logs available in `logs/crypto_agent.log`
+- Redis monitoring: `redis-cli monitor`
+
+## Logging
+
+# Logging system configuration
+Logs are stored in `logs/crypto_agent.log` with:
+- Rotating file handler (10MB max size)
+- Console output
+- Detailed cache operations logging
+- API call tracking
+- Error tracing
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 👤 Author
+
+Patrick Nguyen
+
+## 🙏 Acknowledgments
+
+- [LangGraph](https://github.com/langchain-ai/langgraph) for workflow framework
+- [CoinGecko](https://www.coingecko.com/en/api) for cryptocurrency data
+- [FastAPI](https://fastapi.tiangolo.com/) for API framework
+- [Streamlit](https://streamlit.io/) for frontend interface
+- [Google Gemini](https://ai.google.dev/) for AI capabilities
