@@ -4,21 +4,23 @@ services:
   backend:
     build:
       context: .
-      dockerfile: backend.Dockerfile
+      dockerfile: ./docker/backend.Dockerfile
     ports:
       - "8000:8000"
     environment:
       - REDIS_URL=redis://redis:6379
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - COINGECKO_SERVICE_URL=http://coingecko:8001
     depends_on:
       - redis
+      - coingecko
     networks:
       - crypto_network
 
   frontend:
     build:
       context: .
-      dockerfile: frontend.Dockerfile
+      dockerfile: ./docker/frontend.Dockerfile
     ports:
       - "8501:8501"
     environment:
@@ -27,6 +29,23 @@ services:
       - backend
     networks:
       - crypto_network
+
+  coingecko:
+    build:
+      context: ./services/coingecko
+      dockerfile: Dockerfile
+    ports:
+      - "8001"  # Only specify the container port, let Docker assign host ports dynamically
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - crypto_network
+    deploy:
+      replicas: 2  # Run 2 instances of the service for testing
+      restart_policy:
+        condition: on-failure
 
   redis:
     image: redis:7-alpine

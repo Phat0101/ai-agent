@@ -15,3 +15,4 @@ streamlit==1.32.0
 requests
 plotly==5.19.0
 pandas==2.2.1
+httpx==0.26.0

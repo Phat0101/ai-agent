@@ -1,268 +1,230 @@
 # Crypto Price AI Agent
 
 # Main application description
-An intelligent agent built with LangGraph and FastAPI that provides cryptocurrency price information using the CoinGecko API. The agent can understand natural language queries and provide both current and historical price data with automatic retry and refinement capabilities.
+An intelligent agent built with LangGraph and FastAPI that provides cryptocurrency price information using a microservices architecture. The system consists of multiple services that work together to process natural language queries and provide real-time cryptocurrency data.
 
-## Features
+## 🏗 Architecture Overview
 
-# Core capabilities of the application
-- 🤖 Natural language query understanding using Google's Gemini AI
-- 💰 Real-time cryptocurrency price data from CoinGecko API
-- 📈 Historical price data support with interactive charts
-- 🔄 Automatic retry with query refinement
-- 💾 Redis caching for improved performance
-- 📝 Comprehensive logging system
-- 🚀 FastAPI backend with rate limiting
-- 🎯 Streamlit frontend for easy interaction
+The application is structured as a microservices-based system with the following components:
 
-## Project Structure
+### Core Services
 
-# Directory structure with explanations
+1. **Main Backend Service** (`/app`)
+   - Natural language query processing using Google's Gemini AI
+   - LangGraph-based workflow management
+   - Request routing and orchestration
+   - Rate limiting and error handling
+
+2. **CoinGecko Service** (`/services/coingecko`)
+   - Dedicated cryptocurrency data microservice
+   - Real-time price data retrieval
+   - Historical price data analysis
+   - Redis-based caching layer
+   - Horizontal scaling support
+
+3. **Frontend Service** (`/streamlit_app.py`)
+   - Interactive Streamlit-based UI
+   - Real-time data visualization
+   - Dynamic price charts
+   - System status monitoring
+
+4. **Redis Service**
+   - Distributed caching system
+   - Performance optimization
+   - Service state management
+
+## 📁 Project Structure
+
 ```
 .
-├── app/                      # Main application directory
-│   ├── core/                # Configuration and logging
-│   │   ├── config.py        # Service configuration and initialization
-│   │   └── logging.py       # Logging setup
-│   ├── graph/               # LangGraph workflow components
-│   │   ├── nodes.py         # Graph nodes for query processing
-│   │   ├── state.py         # State management definitions
-│   │   └── workflow.py      # Workflow graph 
-│   ├── services/            # External service integrations
-│   │   ├── coingecko.py     # CoinGecko API client
-│   └── prompts/             # AI model prompts
-│       └── templates.py      # Prompt templates for AI
-├── main.py                   # FastAPI application entry point
-├── streamlit_app.py          # Streamlit frontend application
-└── requirements.txt          # Project dependencies
+├── app/                        # Main Backend Service
+│   ├── core/                  # Core Configuration
+│   │   ├── config.py         # Application configuration
+│   │   └── logging.py        # Logging setup
+│   ├── graph/                # LangGraph Workflow
+│   │   ├── nodes.py         # Workflow nodes
+│   │   ├── state.py         # State management
+│   │   └── workflow.py      # Graph configuration
+│   ├── prompts/             # AI Prompts
+│   │   └── templates.py     # Prompt templates
+│   └── services/            # Service Clients
+│       └── coingecko.py     # CoinGecko client will call to microserive of coingecko
+│
+├── services/                  # Microservices
+│   └── coingecko/           # CoinGecko Service
+│       ├── main.py          # Service implementation
+│       ├── Dockerfile       # Service container
+│       └── requirements.txt # Service dependencies
+│
+├── docker/                    # Docker Configuration
+│   ├── backend.Dockerfile   # Backend service
+│   └── frontend.Dockerfile  # Frontend service
+│
+├── main.py                    # Main service entry
+├── streamlit_app.py          # Frontend application
+├── docker-compose.yml        # Service orchestration
+└── requirements.txt          # Main dependencies
 ```
 
-## Prerequisites
+## ✨ Features
 
-# Required components before installation
+### Natural Language Processing
+- Advanced query understanding using Google's Gemini AI
+- Automatic cryptocurrency name resolution
+- Context-aware response generation
+- Query refinement for failed requests
+
+### Cryptocurrency Data
+- Real-time price information
+- Historical price analysis
+- Market capitalization data
+- 24-hour price changes
+- Interactive price charts
+
+### System Features
+- Microservices architecture
+- Horizontal scaling capability
+- Redis caching layer
+- Rate limiting protection
+- CORS support
+- Comprehensive error handling
+- Detailed logging system
+
+### Frontend Interface
+- Modern, responsive design
+- Real-time data updates
+- Interactive charts
+- Query suggestions
+- Error feedback
+- System status monitoring
+
+## 🚀 Getting Started
+
+### Prerequisites
 - Python 3.9+
-- Redis (optional, for caching)
+- Docker and Docker Compose
+- Redis (optional for local development)
 - Google Gemini API key
 
-### Redis Setup
+### Environment Setup
 
-# Platform-specific Redis installation instructions
-#### macOS
-Using Homebrew:
-```bash
-# Install Redis
-brew install redis
-
-# Start Redis
-brew services start redis
-
-# Verify Redis is running
-redis-cli ping  # Should return "PONG"
-```
-
-#### Linux (Ubuntu/Debian)
-```bash
-# Install Redis
-sudo apt update
-sudo apt install redis-server
-
-# Start Redis and enable auto-start
-sudo systemctl start redis-server
-sudo systemctl enable redis-server
-
-# Verify Redis is running
-redis-cli ping  # Should return "PONG"
-```
-
-#### Windows
-1. Using Windows Subsystem for Linux (WSL) - Recommended:
-```bash
-# Install WSL if not already installed
-wsl --install
-
-# Follow Linux instructions above in WSL
-```
-
-2. Using Windows native installation:
-   - Download the latest Redis release for Windows from [GitHub](https://github.com/microsoftarchive/redis/releases)
-   - Run the installer (Redis-x64-xxx.msi)
-   - Redis will be installed as a Windows service and start automatically
-
-#### Docker (Cross-platform)
-```bash
-# Pull and run Redis container
-docker run --name redis -d -p 6379:6379 redis
-```
-
-## Installation
-
-# Step-by-step installation process
 1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd crypto-price-ai-agent
 ```
 
-2. Create and activate a virtual environment:
+2. Create and configure environment variables:
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+cp .env.example .env
+# Edit .env with your configuration
 ```
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Create a `.env` file with your configuration:
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-REDIS_URL=redis://localhost:6379  # Optional, for caching
-```
-
-## Running the Application
-
-### Standard Deployment
-# Instructions for starting both backend and frontend
-1. Start the FastAPI backend:
-```bash
-uvicorn main:app --reload
-```
-The API will be available at `http://localhost:8000`
-
-2. In a new terminal, start the Streamlit frontend:
-```bash
-streamlit run streamlit_app.py
-```
-The web interface will be available at `http://localhost:8501`
+Required environment variables:
+- `GEMINI_API_KEY`: Your Google Gemini API key
+- `REDIS_URL`: Redis connection URL (default: redis://localhost:6379)
+- `PORT`: Port for the CoinGecko service (default: 8001)
 
 ### Docker Deployment
-# Instructions for running with Docker
-1. Make sure you have Docker and Docker Compose installed on your system.
 
-2. Create a `.env` file in the project root with your configuration:
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-3. Build and start the containers:
+1. Build and start all services:
 ```bash
 docker-compose up --build
 ```
 
-This will start three containers:
-- Frontend (Streamlit): http://localhost:8501
-- Backend (FastAPI): http://localhost:8000
-- Redis: localhost:6379
+Services will be available at:
+- Frontend: http://localhost:8501
+- Main Backend: http://localhost:8000
+- CoinGecko Service: http://localhost:8001
 
-#### Useful Docker Commands
+### Service Management
+
+Scale the CoinGecko service:
 ```bash
-# Start the services in detached mode
-docker-compose up -d
-
-# View logs of all services
-docker-compose logs -f
-
-# View logs of a specific service
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f redis
-
-# Stop the services
-docker-compose down
-
-# Stop the services and remove volumes
-docker-compose down -v
-
-# Rebuild a specific service
-docker-compose up --build backend
+docker-compose up -d --scale coingecko=3
 ```
 
-#### Container Structure
-The application is containerized into three services:
-1. **Backend (FastAPI)**
-   - Handles API requests
-   - Processes queries using Gemini AI
-   - Communicates with CoinGecko API
-   - Caches responses in Redis
+View service logs:
+```bash
+docker-compose logs -f [service_name]
+```
 
-2. **Frontend (Streamlit)**
-   - Provides user interface
-   - Displays real-time cryptocurrency data
-   - Shows interactive charts
-   - Communicates with backend API
+## 📝 API Documentation
 
-3. **Redis**
-   - Caches API responses
-   - Improves response times
-   - Reduces external API calls
-   - Persists data using volumes
+### Main Backend Endpoints
 
-#### Docker Volumes
-- `redis_data`: Persists Redis data between container restarts
-
-#### Networks
-- `crypto_network`: Internal network for service communication
-
-## Using the Application
-
-### Web Interface
-1. Open your browser and navigate to `http://localhost:8501`
-2. Enter your query in the text input field
-3. View the response, including:
-   - Natural language response
-   - Interactive price charts (for historical queries)
-   - Raw data in expandable section
-
-### API Endpoints
-
-# Available API endpoints and usage
 #### Query Endpoint
 ```bash
-curl -X POST "http://localhost:8000/query" \
-     -H "Content-Type: application/json" \
-     -d '{"query": "What is the price of Bitcoin?"}'
+POST /query
+Content-Type: application/json
+{
+    "query": "What is the current price of Bitcoin?"
+}
 ```
 
 #### Health Check
 ```bash
-curl "http://localhost:8000/health"
+GET /health
 ```
 
-### Example Queries
-- Current price: "What is the price of Bitcoin?"
-- Historical data: "Show me Ethereum's price history for the last 7 days"
-- Alternative names: "What's the current price of DOGE?"
+### CoinGecko Service Endpoints
 
-## Features
+#### Current Price
+```bash
+GET /price/{coin_id}
+```
 
-### Backend (FastAPI)
-# Backend capabilities
-- Natural language processing with Gemini AI
-- Automatic query refinement
-- Redis caching for improved performance
-- Rate limiting (5 requests/minute per IP)
-- Comprehensive error handling
-- Health check endpoint
+#### Historical Data
+```bash
+GET /historical/{coin_id}?days={number_of_days}
+```
 
-### Frontend (Streamlit)
-# Frontend features
-- Clean, modern interface
-- Real-time API status monitoring
-- Interactive price charts
-- Query examples
-- Raw data viewer
-- Error handling and user feedback
+## 🔍 Example Queries
 
-## Error Handling
+- "What is Bitcoin's current price?"
+- "Show me Ethereum's price history for the last 7 days"
+- "What's the current market cap of Dogecoin?"
+- "How has BNB performed over the last week?"
 
-# Comprehensive error handling capabilities
-The system includes comprehensive error handling:
-- Invalid cryptocurrency names
-- API rate limits and failures
-- Cache failures
-- Query parsing errors
-- Network connectivity issues
+## 🛠 Development
+
+### Local Development Setup
+
+1. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Start Redis (if using locally):
+```bash
+docker run -d -p 6379:6379 redis:alpine
+```
+
+4. Run services:
+```bash
+# Terminal 1 - Main Backend
+uvicorn main:app --reload --port 8000
+
+# Terminal 2 - CoinGecko Service
+cd services/coingecko
+uvicorn main:app --reload --port 8001
+
+# Terminal 3 - Frontend
+streamlit run streamlit_app.py
+```
+
+## 📈 Monitoring
+
+- Service health checks available at `/health` endpoints
+- Docker container status: `docker-compose ps`
+- Logs available in `logs/crypto_agent.log`
+- Redis monitoring: `redis-cli monitor`
 
 ## Logging
 
@@ -274,19 +236,18 @@ Logs are stored in `logs/crypto_agent.log` with:
 - API call tracking
 - Error tracing
 
-## License
+## 📄 License
 
-MIT License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
-
-# Credits and references
-- [LangGraph](https://github.com/langchain-ai/langgraph) for the workflow framework
-- [CoinGecko](https://www.coingecko.com/en/api) for the cryptocurrency data API
-- [FastAPI](https://fastapi.tiangolo.com/) for the web framework
-- [Streamlit](https://streamlit.io/) for the frontend interface
-- [Google Gemini](https://ai.google.dev/) for natural language processing
-
-## Author
+## 👤 Author
 
 Patrick Nguyen
+
+## 🙏 Acknowledgments
+
+- [LangGraph](https://github.com/langchain-ai/langgraph) for workflow framework
+- [CoinGecko](https://www.coingecko.com/en/api) for cryptocurrency data
+- [FastAPI](https://fastapi.tiangolo.com/) for API framework
+- [Streamlit](https://streamlit.io/) for frontend interface
+- [Google Gemini](https://ai.google.dev/) for AI capabilities
