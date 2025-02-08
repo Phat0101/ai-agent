@@ -5,6 +5,11 @@ from datetime import datetime
 import plotly.graph_objects as go
 import pandas as pd
 import re
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure the page
 st.set_page_config(
@@ -29,7 +34,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Constants
-API_URL = "http://localhost:8000"
+API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 def format_response_text(text: str) -> str:
     """Clean and format the response text"""

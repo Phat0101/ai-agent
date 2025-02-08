@@ -122,6 +122,7 @@ REDIS_URL=redis://localhost:6379  # Optional, for caching
 
 ## Running the Application
 
+### Standard Deployment
 # Instructions for starting both backend and frontend
 1. Start the FastAPI backend:
 ```bash
@@ -134,6 +135,74 @@ The API will be available at `http://localhost:8000`
 streamlit run streamlit_app.py
 ```
 The web interface will be available at `http://localhost:8501`
+
+### Docker Deployment
+# Instructions for running with Docker
+1. Make sure you have Docker and Docker Compose installed on your system.
+
+2. Create a `.env` file in the project root with your configuration:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+3. Build and start the containers:
+```bash
+docker-compose up --build
+```
+
+This will start three containers:
+- Frontend (Streamlit): http://localhost:8501
+- Backend (FastAPI): http://localhost:8000
+- Redis: localhost:6379
+
+#### Useful Docker Commands
+```bash
+# Start the services in detached mode
+docker-compose up -d
+
+# View logs of all services
+docker-compose logs -f
+
+# View logs of a specific service
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f redis
+
+# Stop the services
+docker-compose down
+
+# Stop the services and remove volumes
+docker-compose down -v
+
+# Rebuild a specific service
+docker-compose up --build backend
+```
+
+#### Container Structure
+The application is containerized into three services:
+1. **Backend (FastAPI)**
+   - Handles API requests
+   - Processes queries using Gemini AI
+   - Communicates with CoinGecko API
+   - Caches responses in Redis
+
+2. **Frontend (Streamlit)**
+   - Provides user interface
+   - Displays real-time cryptocurrency data
+   - Shows interactive charts
+   - Communicates with backend API
+
+3. **Redis**
+   - Caches API responses
+   - Improves response times
+   - Reduces external API calls
+   - Persists data using volumes
+
+#### Docker Volumes
+- `redis_data`: Persists Redis data between container restarts
+
+#### Networks
+- `crypto_network`: Internal network for service communication
 
 ## Using the Application
 
