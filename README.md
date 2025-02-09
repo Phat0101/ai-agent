@@ -11,29 +11,45 @@ The application is structured as a microservices-based system with the following
 
 ```mermaid
 graph TD
-    User((User)) --> Frontend[Frontend Service]
-    Frontend --> Backend[Main Backend Service]
-    Backend --> CoinGecko[CoinGecko Service]
-    Backend --> GeminiAI[Google Gemini AI]
-    CoinGecko --> Redis[(Redis Cache)]
-    CoinGecko --> CoinGeckoAPI[CoinGecko API]
-    
-    subgraph Service Details
-        Frontend --> |Streamlit UI|Charts[Interactive Charts]
-        Frontend --> |Real-time|Status[System Status]
-        Backend --> |Natural Language|Processing[Query Processing]
-        Backend --> |Error Handling|Retry[Retry Logic]
-        CoinGecko --> |Cache Management|TTL[60s Cache TTL]
-        CoinGecko --> |Horizontal Scaling|Load[Load Balancing]
+
+    Frontend[Frontend - Streamlit] --> |Query|QueryAnalysis
+
+    subgraph Backend [Backend Service]
+        subgraph LangGraph [LangGraph Service]
+            QueryAnalysis[Query Analysis]
+            FetchData[Data Fetch]
+            Reflection[Reflection]
+            FormatResponse[Format Response]
+            
+            QueryAnalysis --> FetchData
+            FetchData --> Reflection
+            Reflection --> FetchData
+            FetchData --> FormatResponse
+        end
+        
+        subgraph CoinGecko [CoinGecko Services]
+            Service1[Service Instance 1]
+            Service2[Service Instance 2]
+            Redis[(Redis Cache)]
+            
+            Service1 & Service2 --> Redis
+        end
+        
+        %% Internal connections
+        FetchData --> Service1
+        FetchData --> Service2
     end
     
-    style User fill:#f9f,stroke:#333
-    style Frontend fill:#bbf,stroke:#333
-    style Backend fill:#bfb,stroke:#333
-    style CoinGecko fill:#fbb,stroke:#333
-    style Redis fill:#ddd,stroke:#333
-    style GeminiAI fill:#dfd,stroke:#333
-    style CoinGeckoAPI fill:#ffd,stroke:#333
+    subgraph External [External APIs]
+        GeminiAI[Google Gemini AI]
+        CoinGeckoAPI[CoinGecko API]
+    end
+    
+    %% External connections
+    QueryAnalysis & FormatResponse --> GeminiAI
+    Service1 & Service2 --> CoinGeckoAPI
+    FormatResponse --> |Answer|Frontend
+     
 ```
 
 For detailed technical documentation about the internal workings, workflows, and state management, please see [Technical Documentation](docs/TECHNICAL.md).
@@ -66,7 +82,9 @@ For detailed technical documentation about the internal workings, workflows, and
 │   └── frontend.Dockerfile  # Frontend service
 │
 ├── main.py                    # Main service entry
-├── streamlit_app.py          # Frontend application
+|── frontend/
+│   ├── streamlit_app.py      # Frontend application
+│
 ├── docker-compose.yml        # Service orchestration
 └── requirements.txt          # Main dependencies
 ```
